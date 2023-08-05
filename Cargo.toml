@@ -1,8 +1,21 @@
 [package]
-name = "toml-override"
+name = "tomlpipe"
 version = "0.1.0"
+authors = ["pollenJP <polleninjp@gmail.com>"]
 edition = "2021"
+description = "CLI tool to override TOML files"
+license = "MIT"
+crate-type = ["bin"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+path = "src/main.rs"
+name = "tomlpipe"
+bench = false
+
 [dependencies]
+anyhow = "1.0.72"
+clap = { version = "4.3.19", features = ["derive"] }
+toml = { version = "0.7.6", features = ["preserve_order"] }
+toml_edit = "0.19.14"
