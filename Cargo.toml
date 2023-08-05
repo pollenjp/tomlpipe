@@ -3,7 +3,8 @@ name = "tomlpipe"
 version = "0.1.0"
 authors = ["pollenJP <polleninjp@gmail.com>"]
 edition = "2021"
-description = "CLI tool to override TOML files"
+description = "CLI tool for editing a TOML file"
+repository = "https://github.com/pollenjp/tomlpipe"
 license = "MIT"
 crate-type = ["bin"]
 
