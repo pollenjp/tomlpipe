@@ -94,12 +94,6 @@ pub fn run() -> Result<()> {
                             &default_override_toml_options(),
                         )?;
                     }
-                    println!("override_toml: {:?}", override_toml);
-
-                    for (k, v) in override_toml.iter() {
-                        println!("item: {:?}, {:?}", k, v);
-                    }
-
                     out_toml["disabled_plugins"] =
                         toml_edit::value(toml_edit::Array::from_iter(vec!["foo"]));
                 }
