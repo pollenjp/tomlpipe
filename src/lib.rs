@@ -1,7 +1,6 @@
 use ::anyhow::{bail, Context, Result};
 use ::clap::{Parser, Subcommand};
 use ::std::io;
-use ::toml;
 use ::toml_edit;
 
 #[derive(Parser, Debug)]
@@ -61,9 +60,6 @@ pub fn run() -> Result<()> {
                 }
             }
 
-            let base_toml = toml::from_str::<toml::Value>(&base_toml_str)
-                .with_context(|| format!("Failed to parse base_toml: {:?}", base_toml_str))?;
-
             let mut out_toml = base_toml_str
                 .parse::<toml_edit::Document>()
                 .with_context(|| {
@@ -76,21 +72,36 @@ pub fn run() -> Result<()> {
                 (Some(toml_path), None, None) => {
                     let override_toml = std::fs::read_to_string(&toml_path)
                         .with_context(|| format!("Failed to read toml: {:?}", toml_path))?;
-                    let override_toml = toml::from_str::<toml::Value>(&override_toml)
-                        .with_context(|| {
-                            format!("Failed to parse override_toml: {:?}", override_toml)
-                        })?;
+                    // let override_toml = toml::from_str::<toml::Value>(&override_toml)
+                    //     .with_context(|| {
+                    //         format!("Failed to parse override_toml: {:?}", override_toml)
+                    //     })?;
+                    let override_toml =
+                        override_toml
+                            .parse::<toml_edit::Document>()
+                            .with_context(|| {
+                                format!(
+                                    "Failed to parse toml as toml_edit::Document: {:?}",
+                                    override_toml
+                                )
+                            })?;
+
+                    // override_toml =
+                    for (k, v) in override_toml.iter() {
+                        out_toml[k] = override_toml_values(
+                            &out_toml.as_item()[k],
+                            v,
+                            &default_override_toml_options(),
+                        )?;
+                    }
                     println!("override_toml: {:?}", override_toml);
 
-                    // println!("{:?}", out_toml);
-                    println!("{:?}", out_toml["disabled_plugins"]);
+                    for (k, v) in override_toml.iter() {
+                        println!("item: {:?}, {:?}", k, v);
+                    }
+
                     out_toml["disabled_plugins"] =
                         toml_edit::value(toml_edit::Array::from_iter(vec!["foo"]));
-
-                    // for (k, v) in override_toml.as_table().unwrap() {
-                    //     println!("k: {:?}, v: {:?}", k, v);
-                    //     out_toml[k] = toml_edit::value(v.clone());
-                    // }
                 }
                 (None, Some(_), Some(_)) => {
                     bail!("not implemented yet")
@@ -113,5 +124,73 @@ pub fn run() -> Result<()> {
             println!("fizz: {:?}", fizz);
             Ok(())
         }
+    }
+}
+
+fn is_same_enum(a: &toml_edit::Item, b: &toml_edit::Item) -> bool {
+    match (a, b) {
+        (toml_edit::Item::Value(_), toml_edit::Item::Value(_)) => true,
+        (toml_edit::Item::Table(_), toml_edit::Item::Table(_)) => true,
+        (toml_edit::Item::ArrayOfTables(_), toml_edit::Item::ArrayOfTables(_)) => true,
+        _ => false,
+    }
+}
+
+fn override_toml_values(
+    orig_item: &toml_edit::Item,
+    override_item: &toml_edit::Item,
+    options: &OverrideTomlOptions,
+) -> Result<toml_edit::Item> {
+    let mut out_toml = orig_item.clone();
+
+    // if the section does not exist in original, just copy the override
+    if orig_item.is_none() {
+        out_toml = override_item.clone();
+    }
+
+    if !is_same_enum(orig_item, override_item) {
+        match options.allow_override_type {
+            true => {
+                // just copy the override
+                out_toml = override_item.clone();
+                return Ok(out_toml);
+            }
+            false => {
+                bail!(
+                    "override_toml type does not match original toml: {:?} vs {:?}",
+                    orig_item,
+                    override_item
+                )
+            }
+        }
+    }
+
+    match override_item {
+        toml_edit::Item::Table(v) => {
+            for (k, v) in v.iter() {
+                // if out_toml[k].is_none() {
+                //     out_toml[k] = v.clone();
+                // } else {
+                out_toml[k] = override_toml_values(&out_toml[k], v, options)?;
+                // }
+                // out_toml[k] = override_toml_values(out_toml[k], v)
+                //     .with_context(format!("Failed to override toml: {:?}", v))?
+            }
+        }
+        _ => {
+            out_toml = override_item.clone();
+        }
+    }
+
+    Ok(out_toml)
+}
+
+struct OverrideTomlOptions {
+    allow_override_type: bool,
+}
+
+fn default_override_toml_options() -> OverrideTomlOptions {
+    OverrideTomlOptions {
+        allow_override_type: false,
     }
 }

@@ -17,5 +17,4 @@ bench = false
 [dependencies]
 anyhow = "1.0.72"
 clap = { version = "4.3.19", features = ["derive"] }
-toml = { version = "0.7.6", features = ["preserve_order"] }
 toml_edit = "0.19.14"
