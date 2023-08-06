@@ -85,14 +85,14 @@ jobs:
           BUILT_ARCHIVE_FILENAME=$(
             echo ${{ steps.compile.outputs.BUILT_ARCHIVE }} |
             sed 's/.*\///' |
-            sed 's/_null_/_v${{ steps.version.outputs.version_tag }}_/')
+            sed 's/_null_/_v${{ steps.version.outputs.version_tag }}_/'
           )
           echo built_archive_filename="${BUILT_ARCHIVE_FILENAME}" >> $GITHUB_OUTPUT
 
           BUILT_CHECKSUM_FILENAME=$(
             echo ${{ steps.compile.outputs.BUILT_CHECKSUM }} |
             sed 's/.*\///' |
-            sed 's/_null_/_v${{ steps.version.outputs.version_tag }}_/')
+            sed 's/_null_/_v${{ steps.version.outputs.version_tag }}_/'
           )
           echo built_checksum_filename="${BUILT_CHECKSUM_FILENAME}" >> $GITHUB_OUTPUT
 
