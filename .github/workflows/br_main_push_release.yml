@@ -80,6 +80,7 @@ jobs:
           UPLOAD_MODE: none
 
       - name: parse string
+        id: parsed_var
         run: |
           # get file name from path
           BUILT_ARCHIVE_FILENAME=$(
@@ -100,11 +101,11 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ steps.compile.outputs.BUILT_ARCHIVE }}
-          asset_name: ${{ steps.compile.outputs.built_archive_filename }}
+          asset_name: ${{ steps.parsed_var.outputs.built_archive_filename }}
           tag: v${{ steps.version.outputs.version_tag }}
       - uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ steps.compile.outputs.BUILT_CHECKSUM }}
-          asset_name: ${{ steps.compile.outputs.built_checksum_filename }}
+          asset_name: ${{ steps.parsed_var.outputs.built_checksum_filename }}
           tag: v${{ steps.version.outputs.version_tag }}
