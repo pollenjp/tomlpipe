@@ -1,6 +1,6 @@
 [package]
 name = "tomlpipe"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["pollenJP <polleninjp@gmail.com>"]
 edition = "2021"
 description = "CLI tool for editing a TOML file"
