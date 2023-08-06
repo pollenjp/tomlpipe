@@ -1,0 +1,44 @@
+name: publish release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  auto-drafter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: version
+        id: version
+        run: |
+          wget -O stoml https://github.com/freshautomations/stoml/releases/download/v0.7.0/stoml_linux_amd64
+          chmod +x stoml
+          pwd
+          version=$(./stoml Carto.toml package.version)
+          echo "version_tag=${version}" >> $GITHUB_OUTPUT
+
+      - name: tag check
+        run: |
+          if $(git fetch origin "refs/tags/v${{ steps.version.outputs.version_tag }}"); then
+            echo "${{ steps.version.outputs.version_tag }} tag already exists!" >&2
+            exit 1
+          fi
+
+      - name: tag check
+        run: |
+          git tag v${{ steps.version.outputs.version_tag }}
+          git push origin refs/tags/v${{ steps.version.outputs.version_tag }}
+
+      - uses: release-drafter/release-drafter@v5
+        with:
+          config-name: release-drafter.yml
+          version: ${{ steps.version.outputs.version_tag }}
+          publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
