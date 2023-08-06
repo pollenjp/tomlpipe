@@ -1,4 +1,6 @@
+name: release single binary
 on:
+  workflow_dispatch:
   release:
     types:
       - created
