@@ -12,7 +12,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@master
         with:
           fetch-depth: 0
 
@@ -44,3 +44,59 @@ jobs:
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-binary:
+    #################
+    # upload binary #
+    #################
+
+    name: release ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-gnu
+          - x86_64-unknown-linux-musl
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+
+      - name: version
+        id: version
+        run: |
+          wget -O stoml https://github.com/freshautomations/stoml/releases/download/v0.7.0/stoml_linux_amd64
+          chmod +x stoml
+          version=$(./stoml Cargo.toml package.version)
+          echo "version_tag=${version}" >> $GITHUB_OUTPUT
+
+      - name: Compile
+        id: compile
+        uses: rust-build/rust-build.action@v1.4.3
+        with:
+          RUSTTARGET: ${{ matrix.target }}
+          UPLOAD_MODE: none
+
+      - name: parse string
+        run: |
+          # get file name from path
+          BUILT_ARCHIVE_FILENAME=$(echo ${{ steps.compile.outputs.BUILT_ARCHIVE }} | sed 's/.*\///')
+          echo built_archive_filename="${BUILT_ARCHIVE_FILENAME}" >> $GITHUB_OUTPUT
+
+          BUILT_CHECKSUM_FILENAME=$(echo ${{ steps.compile.outputs.BUILT_CHECKSUM }} | sed 's/.*\///')
+          echo built_checksum_filename="${BUILT_CHECKSUM_FILENAME}" >> $GITHUB_OUTPUT
+
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.compile.outputs.BUILT_ARCHIVE }}
+          asset_name: ${{ steps.compile.outputs.built_archive_filename }}
+          tag: v${{ steps.version.outputs.version_tag }}
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.compile.outputs.BUILT_CHECKSUM }}
+          asset_name: ${{ steps.compile.outputs.built_checksum_filename }}
+          tag: v${{ steps.version.outputs.version_tag }}
