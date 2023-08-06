@@ -5,6 +5,7 @@ authors = ["pollenJP <polleninjp@gmail.com>"]
 edition = "2021"
 description = "CLI tool for editing a TOML file"
 repository = "https://github.com/pollenjp/tomlpipe"
+documentation = "https://docs.rs/tomlpipe"
 license = "MIT"
 crate-type = ["bin"]
 
