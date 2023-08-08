@@ -94,8 +94,6 @@ pub fn run() -> Result<()> {
                             &default_override_toml_options(),
                         )?;
                     }
-                    out_toml["disabled_plugins"] =
-                        toml_edit::value(toml_edit::Array::from_iter(vec!["foo"]));
                 }
                 (None, Some(_), Some(_)) => {
                     bail!("not implemented yet")
